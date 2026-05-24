@@ -751,7 +751,7 @@ function renderItems(){
 
       <input
         type="checkbox"
-        ${item.completed ? "checked disabled" : ""}
+        ${item.completed ? "checked" : ""}
       >
 
       <div class="item-content">
@@ -776,8 +776,9 @@ function renderItems(){
             <span class="tag" style="
               background:rgba(34,197,94,0.2);
               color:#86efac;
+              font-weight:bold;
             ">
-              Purchased
+              ✓ Taken
             </span>
             `
             : ""
@@ -787,60 +788,52 @@ function renderItems(){
 
       </div>
 
-      <button
-        class="delete-btn"
-        ${item.completed ? "disabled" : ""}
-        style="
-          ${item.completed
-            ? `
-              opacity:0.4;
-              cursor:not-allowed;
-            `
-            : ""
-          }
-        "
-      >
+      <button class="delete-btn">
         ✕
       </button>
     `;
 
-    // Checkbox only for pending items
+    /* ========================= */
+    /* ===== CHECKBOX ========== */
+    /* ========================= */
 
-    if(!item.completed){
+    div.querySelector("input")
+      .addEventListener("change",e=>{
 
-      div.querySelector("input")
-        .addEventListener("change",e=>{
+      item.completed = e.target.checked;
 
-        item.completed = true;
+      saveData();
 
-        saveData();
+      renderItems();
 
-        renderItems();
+      if(item.completed){
+        showToast("Item Marked As Taken");
+      }else{
+        showToast("Item Unchecked");
+      }
+    });
 
-        showToast("Item Purchased");
-      });
-    }
+    /* ========================= */
+    /* ===== DELETE ============ */
+    /* ========================= */
 
-    // Delete only for pending items
+    div.querySelector(".delete-btn")
+      .addEventListener("click",()=>{
 
-    if(!item.completed){
+      groceries = groceries.filter(
+        g => g.id !== item.id
+      );
 
-      div.querySelector(".delete-btn")
-        .addEventListener("click",()=>{
+      saveData();
 
-        groceries = groceries.filter(
-          g => g.id !== item.id
-        );
+      renderItems();
 
-        saveData();
+      showToast("Item Deleted");
+    });
 
-        renderItems();
-
-        showToast("Item Deleted");
-      });
-    }
-
-    // Append
+    /* ========================= */
+    /* ===== APPEND ============ */
+    /* ========================= */
 
     if(item.completed){
 
@@ -857,7 +850,9 @@ function renderItems(){
 
   });
 
-  // Empty States
+  /* ========================= */
+  /* ===== EMPTY STATES ====== */
+  /* ========================= */
 
   if(pendingList.innerHTML === ""){
     pendingList.innerHTML = `
@@ -872,12 +867,14 @@ function renderItems(){
     completedList.innerHTML = `
       <div class="empty">
         <div class="empty-icon"></div>
-        <p>No purchased items</p>
+        <p>No taken items yet</p>
       </div>
     `;
   }
 
-  // Counts
+  /* ========================= */
+  /* ===== COUNTS ============ */
+  /* ========================= */
 
   totalCount.innerText = groceries.length;
   pendingCount.innerText = pending;
