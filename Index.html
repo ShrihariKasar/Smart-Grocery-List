@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart Grocery List</title>
+
+<style>
+/* ========================= */
+/* ===== ROOT VARIABLES ==== */
+/* ========================= */
+
+:root{
+  --bg:#0f172a;
+  --bg-secondary:#111827;
+  --card:rgba(255,255,255,0.08);
+  --glass:rgba(255,255,255,0.1);
+  --text:#ffffff;
+  --muted:#cbd5e1;
+  --primary:#8b5cf6;
+  --secondary:#6366f1;
+  --green:#22c55e;
+  --red:#ef4444;
+  --border:rgba(255,255,255,0.15);
+  --shadow:0 10px 30px rgba(0,0,0,0.3);
+}
+
+body.light{
+  --bg:#f1f5f9;
+  --bg-secondary:#ffffff;
+  --card:rgba(255,255,255,0.7);
+  --glass:rgba(255,255,255,0.8);
+  --text:#0f172a;
+  --muted:#475569;
+  --border:rgba(0,0,0,0.08);
+  --shadow:0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* ========================= */
+/* ===== GLOBAL STYLES ===== */
+/* ========================= */
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  font-family:Arial, sans-serif;
+  background:linear-gradient(180deg,var(--bg),#1e293b);
+  color:var(--text);
+  min-height:100vh;
+  transition:0.3s ease;
+  overflow-x:hidden;
+}
+
+.container{
+  width:100%;
+  max-width:1100px;
+  margin:auto;
+  padding:15px;
+}
+
+/* ========================= */
+/* ===== HEADER ============ */
+/* ========================= */
+
+header{
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  padding:20px;
+  border-radius:0 0 20px 20px;
+  box-shadow:var(--shadow);
+}
+
+.header-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+
+.logo{
+  font-size:1.6rem;
+  font-weight:bold;
+}
+
+.subtitle{
+  margin-top:5px;
+  color:#f8fafc;
+  font-size:0.95rem;
+}
+
+.date{
+  margin-top:8px;
+  font-size:0.85rem;
+  color:#e2e8f0;
+}
+
+.toggle-theme{
+  border:none;
+  padding:10px 14px;
+  border-radius:12px;
+  cursor:pointer;
+  background:white;
+  font-size:1rem;
+}
+
+/* ========================= */
+/* ===== CARD ============== */
+/* ========================= */
+
+.card{
+  background:var(--card);
+  backdrop-filter:blur(12px);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:16px;
+  margin-top:18px;
+  box-shadow:var(--shadow);
+}
+
+/* ========================= */
+/* ===== INPUT AREA ======== */
+/* ========================= */
+
+.input-group{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.input-group input,
+.input-group select{
+  width:100%;
+  padding:14px;
+  border:none;
+  outline:none;
+  border-radius:14px;
+  background:var(--glass);
+  color:var(--text);
+  font-size:1rem;
+}
+
+.input-group input::placeholder{
+  color:var(--muted);
+}
+
+.btn{
+  border:none;
+  padding:14px;
+  border-radius:14px;
+  cursor:pointer;
+  font-weight:bold;
+  transition:0.3s;
+  color:white;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+}
+
+.btn:hover{
+  transform:translateY(-2px);
+}
+
+.btn-danger{
+  background:linear-gradient(135deg,#dc2626,#ef4444);
+}
+
+/* ========================= */
+/* ===== SEARCH ============ */
+/* ========================= */
+
+.search-box{
+  margin-top:15px;
+}
+
+.search-box input{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:14px;
+  background:var(--glass);
+  color:var(--text);
+}
+
+/* ========================= */
+/* ===== STATS ============= */
+/* ========================= */
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:18px;
+}
+
+.stat-box{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:15px;
+  text-align:center;
+  backdrop-filter:blur(10px);
+}
+
+.stat-box h3{
+  font-size:1.5rem;
+  margin-bottom:5px;
+}
+
+/* ========================= */
+/* ===== LIST SECTION ====== */
+/* ========================= */
+
+.sections{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  margin-top:20px;
+}
+
+.section-box{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:15px;
+  backdrop-filter:blur(10px);
+  min-height:300px;
+  max-height:500px;
+  overflow-y:auto;
+}
+
+.section-header{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:15px;
+  position:sticky;
+  top:0;
+  background:var(--bg-secondary);
+  padding:10px;
+  border-radius:12px;
+}
+
+.list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+/* ========================= */
+/* ===== ITEM CARD ========= */
+/* ========================= */
+
+.item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:var(--glass);
+  border-radius:16px;
+  padding:12px;
+  animation:slideIn 0.4s ease;
+  transition:0.3s;
+}
+
+.item.completed{
+  opacity:0.6;
+}
+
+.item.completed .item-name{
+  text-decoration:line-through;
+}
+
+.item input[type="checkbox"]{
+  width:22px;
+  height:22px;
+  accent-color:var(--green);
+}
+
+.item-content{
+  flex:1;
+}
+
+.item-name{
+  font-weight:bold;
+  word-break:break-word;
+}
+
+.meta{
+  margin-top:5px;
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  font-size:0.75rem;
+}
+
+.tag{
+  background:rgba(139,92,246,0.2);
+  color:#ddd6fe;
+  padding:4px 8px;
+  border-radius:20px;
+}
+
+.time{
+  color:var(--muted);
+}
+
+.delete-btn{
+  border:none;
+  background:var(--red);
+  color:white;
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  cursor:pointer;
+}
+
+/* ========================= */
+/* ===== EMPTY STATE ======= */
+/* ========================= */
+
+.empty{
+  text-align:center;
+  padding:40px 10px;
+  color:var(--muted);
+}
+
+.empty-icon{
+  width:70px;
+  height:70px;
+  margin:auto;
+  border-radius:50%;
+  border:4px dashed var(--primary);
+  animation:rotate 5s linear infinite;
+  margin-bottom:15px;
+}
+
+/* ========================= */
+/* ===== TOAST ============= */
+/* ========================= */
+
+.toast{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  background:var(--bg-secondary);
+  color:var(--text);
+  padding:14px 18px;
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  opacity:0;
+  pointer-events:none;
+  transition:0.3s;
+  z-index:999;
+}
+
+.toast.show{
+  opacity:1;
+  transform:translateY(-10px);
+}
+
+/* ========================= */
+/* ===== FLOAT BTN ========= */
+/* ========================= */
+
+.fab{
+  position:fixed;
+  bottom:20px;
+  left:20px;
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  border:none;
+  background:linear-gradient(135deg,var(--primary),var(--secondary));
+  color:white;
+  font-size:2rem;
+  cursor:pointer;
+  box-shadow:var(--shadow);
+}
+
+/* ========================= */
+/* ===== MODAL ============= */
+/* ========================= */
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.5);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+
+.modal-content{
+  width:90%;
+  max-width:350px;
+  background:var(--bg-secondary);
+  padding:25px;
+  border-radius:20px;
+  text-align:center;
+}
+
+.modal-buttons{
+  display:flex;
+  gap:10px;
+  margin-top:20px;
+}
+
+.modal-buttons button{
+  flex:1;
+}
+
+/* ========================= */
+/* ===== ANIMATIONS ======== */
+/* ========================= */
+
+@keyframes slideIn{
+  from{
+    opacity:0;
+    transform:translateY(10px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+@keyframes rotate{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
+
+.shake{
+  animation:shake 0.3s;
+}
+
+@keyframes shake{
+  0%{transform:translateX(0);}
+  25%{transform:translateX(-5px);}
+  50%{transform:translateX(5px);}
+  75%{transform:translateX(-5px);}
+  100%{transform:translateX(0);}
+}
+
+/* ========================= */
+/* ===== RESPONSIVE ======== */
+/* ========================= */
+
+@media(max-width:768px){
+
+  .sections{
+    grid-template-columns:1fr;
+  }
+
+  .stats{
+    grid-template-columns:1fr;
+  }
+
+  .logo{
+    font-size:1.3rem;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="header-top">
+    <div>
+      <div class="logo">🛒 Smart Grocery</div>
+      <div class="subtitle">
+        Manage your daily shopping easily
+      </div>
+      <div class="date" id="date"></div>
+    </div>
+
+    <button class="toggle-theme" id="themeBtn">
+      🌙
+    </button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ADD ITEM -->
+  <div class="card">
+
+    <div class="input-group">
+
+      <input
+        type="text"
+        id="itemInput"
+        placeholder="Enter grocery item"
+      />
+
+      <select id="category">
+        <option>Vegetables</option>
+        <option>Fruits</option>
+        <option>Dairy</option>
+        <option>Snacks</option>
+        <option>Beverages</option>
+        <option>Household</option>
+        <option>Other</option>
+      </select>
+
+      <button class="btn" id="addBtn">
+        Add Grocery
+      </button>
+
+      <button class="btn btn-danger" id="deleteAllBtn">
+        Delete All
+      </button>
+
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-box">
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Search grocery items..."
+      />
+    </div>
+
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+
+    <div class="stat-box">
+      <h3 id="totalCount">0</h3>
+      <p>Total</p>
+    </div>
+
+    <div class="stat-box">
+      <h3 id="pendingCount">0</h3>
+      <p>Pending</p>
+    </div>
+
+    <div class="stat-box">
+      <h3 id="completedCount">0</h3>
+      <p>Purchased</p>
+    </div>
+
+  </div>
+
+  <!-- LISTS -->
+  <div class="sections">
+
+    <!-- PENDING -->
+    <div class="section-box">
+
+      <div class="section-header">
+        <h3>Pending Items</h3>
+        <span id="pendingBadge">0</span>
+      </div>
+
+      <div class="list" id="pendingList"></div>
+
+    </div>
+
+    <!-- COMPLETED -->
+    <div class="section-box">
+
+      <div class="section-header">
+        <h3>Purchased Items</h3>
+
+        <button class="btn" id="clearCompleted">
+          Clear
+        </button>
+      </div>
+
+      <div class="list" id="completedList"></div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<!-- FLOATING BUTTON -->
+<button class="fab" id="fab">
+  +
+</button>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+
+  <div class="modal-content">
+
+    <h2>Delete All Items?</h2>
+
+    <p style="margin-top:10px;">
+      This action cannot be undone.
+    </p>
+
+    <div class="modal-buttons">
+
+      <button class="btn btn-danger" id="confirmDelete">
+        Delete
+      </button>
+
+      <button class="btn" id="cancelDelete">
+        Cancel
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+/* ========================= */
+/* ===== DOM ELEMENTS ====== */
+/* ========================= */
+
+const itemInput = document.getElementById("itemInput");
+const category = document.getElementById("category");
+const addBtn = document.getElementById("addBtn");
+const pendingList = document.getElementById("pendingList");
+const completedList = document.getElementById("completedList");
+const searchInput = document.getElementById("searchInput");
+const toast = document.getElementById("toast");
+
+const totalCount = document.getElementById("totalCount");
+const pendingCount = document.getElementById("pendingCount");
+const completedCount = document.getElementById("completedCount");
+const pendingBadge = document.getElementById("pendingBadge");
+
+const themeBtn = document.getElementById("themeBtn");
+
+let groceries = JSON.parse(localStorage.getItem("groceries")) || [];
+
+/* ========================= */
+/* ===== DATE ============== */
+/* ========================= */
+
+document.getElementById("date").innerText =
+  new Date().toDateString();
+
+/* ========================= */
+/* ===== SAVE DATA ========= */
+/* ========================= */
+
+function saveData(){
+  localStorage.setItem(
+    "groceries",
+    JSON.stringify(groceries)
+  );
+}
+
+/* ========================= */
+/* ===== TOAST ============= */
+/* ========================= */
+
+function showToast(message){
+
+  toast.innerText = message;
+  toast.classList.add("show");
+
+  setTimeout(()=>{
+    toast.classList.remove("show");
+  },2000);
+}
+
+/* ========================= */
+/* ===== ADD ITEM ========== */
+/* ========================= */
+
+function addItem(){
+
+  const value = itemInput.value.trim();
+
+  if(value === ""){
+
+    itemInput.classList.add("shake");
+
+    setTimeout(()=>{
+      itemInput.classList.remove("shake");
+    },300);
+
+    return;
+  }
+
+  const item = {
+
+    id:Date.now(),
+
+    name:value,
+
+    category:category.value,
+
+    completed:false,
+
+    time:new Date().toLocaleTimeString()
+
+  };
+
+  groceries.unshift(item);
+
+  saveData();
+
+  renderItems();
+
+  itemInput.value = "";
+
+  showToast("Item Added");
+}
+
+/* ========================= */
+/* ===== RENDER ITEMS ====== */
+/* ========================= */
+
+function renderItems(){
+
+  pendingList.innerHTML = "";
+  completedList.innerHTML = "";
+
+  const search = searchInput.value.toLowerCase();
+
+  let pending = 0;
+  let completed = 0;
+
+  const filtered = groceries.filter(item =>
+    item.name.toLowerCase().includes(search)
+  );
+
+  filtered.forEach(item => {
+
+    const div = document.createElement("div");
+
+    div.className =
+      item.completed
+      ? "item completed"
+      : "item";
+
+    div.innerHTML = `
+
+      <input
+        type="checkbox"
+        ${item.completed ? "checked" : ""}
+      >
+
+      <div class="item-content">
+
+        <div class="item-name">
+          ${item.name}
+        </div>
+
+        <div class="meta">
+
+          <span class="tag">
+            ${item.category}
+          </span>
+
+          <span class="time">
+            ${item.time}
+          </span>
+
+        </div>
+
+      </div>
+
+      <button class="delete-btn">
+        ✕
+      </button>
+    `;
+
+    // Checkbox
+
+    div.querySelector("input")
+      .addEventListener("change",e=>{
+
+      item.completed = e.target.checked;
+
+      saveData();
+
+      renderItems();
+
+      showToast(
+        item.completed
+        ? "Item Purchased"
+        : "Item Moved Back"
+      );
+    });
+
+    // Delete
+
+    div.querySelector(".delete-btn")
+      .addEventListener("click",()=>{
+
+      groceries = groceries.filter(
+        g => g.id !== item.id
+      );
+
+      saveData();
+
+      renderItems();
+
+      showToast("Item Deleted");
+    });
+
+    // Append
+
+    if(item.completed){
+
+      completedList.appendChild(div);
+
+      completed++;
+
+    }else{
+
+      pendingList.appendChild(div);
+
+      pending++;
+    }
+
+  });
+
+  // Empty States
+
+  if(pendingList.innerHTML === ""){
+    pendingList.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon"></div>
+        <p>No grocery items added yet</p>
+      </div>
+    `;
+  }
+
+  if(completedList.innerHTML === ""){
+    completedList.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon"></div>
+        <p>No purchased items</p>
+      </div>
+    `;
+  }
+
+  // Counts
+
+  totalCount.innerText = groceries.length;
+  pendingCount.innerText = pending;
+  completedCount.innerText = completed;
+  pendingBadge.innerText = pending;
+}
+
+/* ========================= */
+/* ===== EVENTS ============ */
+/* ========================= */
+
+addBtn.addEventListener("click",addItem);
+
+itemInput.addEventListener("keypress",e=>{
+
+  if(e.key === "Enter"){
+    addItem();
+  }
+});
+
+searchInput.addEventListener("input",renderItems);
+
+/* ========================= */
+/* ===== CLEAR COMPLETED === */
+/* ========================= */
+
+document.getElementById("clearCompleted")
+.addEventListener("click",()=>{
+
+  groceries = groceries.filter(
+    item => !item.completed
+  );
+
+  saveData();
+
+  renderItems();
+
+  showToast("Purchased Cleared");
+});
+
+/* ========================= */
+/* ===== DARK MODE ========= */
+/* ========================= */
+
+themeBtn.addEventListener("click",()=>{
+
+  document.body.classList.toggle("light");
+
+  if(document.body.classList.contains("light")){
+    themeBtn.innerText = "☀️";
+  }else{
+    themeBtn.innerText = "🌙";
+  }
+});
+
+/* ========================= */
+/* ===== FLOAT BUTTON ====== */
+/* ========================= */
+
+document.getElementById("fab")
+.addEventListener("click",()=>{
+
+  itemInput.focus();
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+});
+
+/* ========================= */
+/* ===== MODAL ============= */
+/* ========================= */
+
+const modal = document.getElementById("modal");
+
+document.getElementById("deleteAllBtn")
+.addEventListener("click",()=>{
+
+  modal.style.display = "flex";
+});
+
+document.getElementById("cancelDelete")
+.addEventListener("click",()=>{
+
+  modal.style.display = "none";
+});
+
+document.getElementById("confirmDelete")
+.addEventListener("click",()=>{
+
+  groceries = [];
+
+  saveData();
+
+  renderItems();
+
+  modal.style.display = "none";
+
+  showToast("All Items Deleted");
+});
+
+/* ========================= */
+/* ===== INIT ============== */
+/* ========================= */
+
+renderItems();
+
+</script>
+
+</body>
+  </html>
