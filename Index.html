@@ -18,18 +18,8 @@
   --secondary:#6366f1;
   --green:#22c55e;
   --red:#ef4444;
-  --border:rgba(255,255,255,0.12);
+  --border:rgba(255,255,255,0.15);
   --shadow:0 10px 30px rgba(0,0,0,0.3);
-}
-
-body.light{
-  --bg:#f1f5f9;
-  --bg2:#e2e8f0;
-  --card:rgba(255,255,255,0.7);
-  --glass:rgba(255,255,255,0.8);
-  --text:#0f172a;
-  --muted:#475569;
-  --border:rgba(0,0,0,0.08);
 }
 
 *{
@@ -48,7 +38,6 @@ body{
   color:var(--text);
   min-height:100vh;
   overflow-x:hidden;
-  transition:0.3s;
 }
 
 .container{
@@ -64,7 +53,7 @@ header{
   z-index:100;
   padding:20px;
   background:linear-gradient(135deg,var(--primary),var(--secondary));
-  border-radius:0 0 22px 22px;
+  border-radius:0 0 20px 20px;
   box-shadow:var(--shadow);
 }
 
@@ -83,30 +72,22 @@ header{
 .subtitle{
   margin-top:5px;
   font-size:0.9rem;
-  color:#f8fafc;
+  color:#e2e8f0;
 }
 
 .date{
-  margin-top:8px;
+  margin-top:6px;
   font-size:0.8rem;
-}
-
-.toggle-theme{
-  border:none;
-  width:45px;
-  height:45px;
-  border-radius:14px;
-  cursor:pointer;
-  font-size:1rem;
+  color:#dbeafe;
 }
 
 .card{
-  background:var(--card);
-  backdrop-filter:blur(12px);
-  border:1px solid var(--border);
-  border-radius:20px;
-  padding:16px;
   margin-top:18px;
+  padding:18px;
+  border-radius:20px;
+  background:var(--card);
+  border:1px solid var(--border);
+  backdrop-filter:blur(10px);
   box-shadow:var(--shadow);
 }
 
@@ -136,10 +117,10 @@ input::placeholder{
   border:none;
   padding:14px;
   border-radius:14px;
-  cursor:pointer;
   font-weight:bold;
-  color:white;
+  cursor:pointer;
   transition:0.3s;
+  color:white;
   background:linear-gradient(135deg,var(--primary),var(--secondary));
 }
 
@@ -152,7 +133,7 @@ input::placeholder{
 }
 
 .search-box{
-  margin-top:15px;
+  margin-top:14px;
 }
 
 .stats{
@@ -163,17 +144,16 @@ input::placeholder{
 }
 
 .stat-box{
+  padding:15px;
+  border-radius:18px;
+  text-align:center;
   background:var(--card);
   border:1px solid var(--border);
-  border-radius:18px;
-  padding:16px;
-  text-align:center;
-  backdrop-filter:blur(10px);
 }
 
 .stat-box h3{
   font-size:1.5rem;
-  margin-bottom:5px;
+  margin-bottom:6px;
 }
 
 .sections{
@@ -185,10 +165,11 @@ input::placeholder{
 
 .section-box{
   background:var(--card);
-  border:1px solid var(--border);
   border-radius:20px;
   padding:15px;
-  max-height:520px;
+  border:1px solid var(--border);
+  min-height:300px;
+  max-height:500px;
   overflow-y:auto;
 }
 
@@ -199,10 +180,9 @@ input::placeholder{
   margin-bottom:15px;
   position:sticky;
   top:0;
-  background:var(--bg);
   padding:10px;
   border-radius:12px;
-  z-index:5;
+  background:#111827;
 }
 
 .list{
@@ -215,14 +195,16 @@ input::placeholder{
   display:flex;
   align-items:center;
   gap:12px;
-  background:var(--glass);
   padding:14px;
   border-radius:16px;
-  animation:slideIn 0.3s ease;
+  background:var(--glass);
+  animation:slideIn .4s ease;
+  transition:.3s;
 }
 
 .item.completed{
-  opacity:0.65;
+  opacity:0.6;
+  border:1px solid rgba(34,197,94,0.4);
 }
 
 .item.completed .item-name{
@@ -230,8 +212,8 @@ input::placeholder{
 }
 
 .item input[type="checkbox"]{
-  width:22px;
-  height:22px;
+  width:24px;
+  height:24px;
   accent-color:var(--green);
 }
 
@@ -247,31 +229,32 @@ input::placeholder{
 .meta{
   margin-top:6px;
   display:flex;
-  gap:8px;
   flex-wrap:wrap;
-  font-size:0.75rem;
+  gap:8px;
 }
 
 .tag{
   padding:4px 10px;
   border-radius:20px;
+  font-size:0.75rem;
   background:rgba(139,92,246,0.2);
   color:#ddd6fe;
 }
 
-.tag-green{
+.taken-tag{
   background:rgba(34,197,94,0.2);
   color:#86efac;
 }
 
 .time{
+  font-size:0.75rem;
   color:var(--muted);
 }
 
 .delete-btn{
-  border:none;
   width:38px;
   height:38px;
+  border:none;
   border-radius:12px;
   background:var(--red);
   color:white;
@@ -284,28 +267,17 @@ input::placeholder{
   color:var(--muted);
 }
 
-.empty-icon{
-  width:70px;
-  height:70px;
-  border-radius:50%;
-  border:4px dashed var(--primary);
-  margin:auto auto 15px;
-  animation:rotate 5s linear infinite;
-}
-
 .toast{
   position:fixed;
   bottom:20px;
   right:20px;
-  background:var(--bg);
-  color:var(--text);
+  background:#111827;
+  color:white;
   padding:14px 18px;
   border-radius:14px;
-  box-shadow:var(--shadow);
   opacity:0;
   pointer-events:none;
-  transition:0.3s;
-  z-index:999;
+  transition:.3s;
 }
 
 .toast.show{
@@ -315,8 +287,8 @@ input::placeholder{
 
 .fab{
   position:fixed;
-  bottom:20px;
   left:20px;
+  bottom:20px;
   width:60px;
   height:60px;
   border:none;
@@ -335,13 +307,13 @@ input::placeholder{
   display:none;
   align-items:center;
   justify-content:center;
-  z-index:1000;
+  z-index:999;
 }
 
 .modal-content{
   width:90%;
   max-width:350px;
-  background:var(--bg);
+  background:#111827;
   padding:25px;
   border-radius:20px;
   text-align:center;
@@ -368,25 +340,16 @@ input::placeholder{
   }
 }
 
-@keyframes rotate{
-  from{
-    transform:rotate(0deg);
-  }
-  to{
-    transform:rotate(360deg);
-  }
-}
-
 .shake{
-  animation:shake 0.3s;
+  animation:shake .3s;
 }
 
 @keyframes shake{
-  0%{transform:translateX(0);}
-  25%{transform:translateX(-5px);}
-  50%{transform:translateX(5px);}
-  75%{transform:translateX(-5px);}
-  100%{transform:translateX(0);}
+  0%{transform:translateX(0)}
+  25%{transform:translateX(-5px)}
+  50%{transform:translateX(5px)}
+  75%{transform:translateX(-5px)}
+  100%{transform:translateX(0)}
 }
 
 @media(max-width:768px){
@@ -402,6 +365,7 @@ input::placeholder{
   .logo{
     font-size:1.3rem;
   }
+
 }
 
 </style>
@@ -414,18 +378,18 @@ input::placeholder{
   <div class="header-top">
 
     <div>
-      <div class="logo">🛒 Smart Grocery</div>
+
+      <div class="logo">
+        🛒 Smart Grocery
+      </div>
 
       <div class="subtitle">
         Manage your daily shopping easily
       </div>
 
       <div class="date" id="date"></div>
-    </div>
 
-    <button class="toggle-theme" id="themeBtn">
-      🌙
-    </button>
+    </div>
 
   </div>
 
@@ -441,7 +405,7 @@ input::placeholder{
         type="text"
         id="itemInput"
         placeholder="Enter grocery item"
-      />
+      >
 
       <select id="category">
         <option>Vegetables</option>
@@ -458,21 +422,24 @@ input::placeholder{
       </button>
 
       <button class="btn" id="shareBtn">
-        Share Grocery List
+        Share Purchase List
       </button>
 
-      <button class="btn btn-danger" id="deleteAllBtn">
+      <button class="btn btn-danger"
+              id="deleteAllBtn">
         Delete All
       </button>
 
     </div>
 
     <div class="search-box">
+
       <input
         type="text"
         id="searchInput"
         placeholder="Search grocery items..."
-      />
+      >
+
     </div>
 
   </div>
@@ -515,13 +482,15 @@ input::placeholder{
 
         <h3>Taken Items</h3>
 
-        <button class="btn" id="clearCompleted">
+        <button class="btn"
+                id="clearCompleted">
           Clear
         </button>
 
       </div>
 
-      <div class="list" id="completedList"></div>
+      <div class="list"
+           id="completedList"></div>
 
     </div>
 
@@ -547,11 +516,13 @@ input::placeholder{
 
     <div class="modal-buttons">
 
-      <button class="btn btn-danger" id="confirmDelete">
+      <button class="btn btn-danger"
+              id="confirmDelete">
         Delete
       </button>
 
-      <button class="btn" id="cancelDelete">
+      <button class="btn"
+              id="cancelDelete">
         Cancel
       </button>
 
@@ -564,37 +535,56 @@ input::placeholder{
 <script>
 
 /* ========================= */
-/* ===== DOM ELEMENTS ====== */
+/* ===== DOM =============== */
 /* ========================= */
 
-const itemInput = document.getElementById("itemInput");
-const category = document.getElementById("category");
-const addBtn = document.getElementById("addBtn");
-const pendingList = document.getElementById("pendingList");
-const completedList = document.getElementById("completedList");
-const searchInput = document.getElementById("searchInput");
-const toast = document.getElementById("toast");
+const itemInput =
+document.getElementById("itemInput");
 
-const totalCount = document.getElementById("totalCount");
-const pendingCount = document.getElementById("pendingCount");
-const completedCount = document.getElementById("completedCount");
-const pendingBadge = document.getElementById("pendingBadge");
+const category =
+document.getElementById("category");
 
-const themeBtn = document.getElementById("themeBtn");
+const addBtn =
+document.getElementById("addBtn");
 
-let groceries = JSON.parse(
-  localStorage.getItem("groceries")
-) || [];
+const pendingList =
+document.getElementById("pendingList");
+
+const completedList =
+document.getElementById("completedList");
+
+const searchInput =
+document.getElementById("searchInput");
+
+const toast =
+document.getElementById("toast");
+
+const totalCount =
+document.getElementById("totalCount");
+
+const pendingCount =
+document.getElementById("pendingCount");
+
+const completedCount =
+document.getElementById("completedCount");
+
+const pendingBadge =
+document.getElementById("pendingBadge");
+
+let groceries =
+JSON.parse(localStorage.getItem("groceries"))
+|| [];
 
 /* ========================= */
 /* ===== DATE ============== */
 /* ========================= */
 
-document.getElementById("date").innerText =
+document.getElementById("date")
+.innerText =
 new Date().toDateString();
 
 /* ========================= */
-/* ===== SAVE DATA ========= */
+/* ===== SAVE ============== */
 /* ========================= */
 
 function saveData(){
@@ -616,7 +606,9 @@ function showToast(message){
   toast.classList.add("show");
 
   setTimeout(()=>{
+
     toast.classList.remove("show");
+
   },2000);
 }
 
@@ -626,14 +618,17 @@ function showToast(message){
 
 function addItem(){
 
-  const value = itemInput.value.trim();
+  const value =
+  itemInput.value.trim();
 
   if(value === ""){
 
     itemInput.classList.add("shake");
 
     setTimeout(()=>{
+
       itemInput.classList.remove("shake");
+
     },300);
 
     return;
@@ -649,7 +644,8 @@ function addItem(){
 
     completed:false,
 
-    time:new Date().toLocaleTimeString()
+    time:new Date()
+    .toLocaleTimeString()
 
   };
 
@@ -665,7 +661,7 @@ function addItem(){
 }
 
 /* ========================= */
-/* ===== RENDER ITEMS ====== */
+/* ===== RENDER ============ */
 /* ========================= */
 
 function renderItems(){
@@ -679,13 +675,17 @@ function renderItems(){
   let pending = 0;
   let completed = 0;
 
-  const filtered = groceries.filter(item =>
-    item.name.toLowerCase().includes(search)
+  const filtered =
+  groceries.filter(item =>
+    item.name
+    .toLowerCase()
+    .includes(search)
   );
 
-  filtered.forEach(item => {
+  filtered.forEach(item=>{
 
-    const div = document.createElement("div");
+    const div =
+    document.createElement("div");
 
     div.className =
     item.completed
@@ -718,9 +718,9 @@ function renderItems(){
           ${
             item.completed
             ? `
-              <span class="tag tag-green">
-                ✓ Taken
-              </span>
+            <span class="tag taken-tag">
+              ✓ Taken
+            </span>
             `
             : ""
           }
@@ -734,31 +734,40 @@ function renderItems(){
       </button>
     `;
 
-    /* ===== CHECKBOX ===== */
+    /* CHECKBOX */
 
     div.querySelector("input")
     .addEventListener("change",e=>{
 
-      item.completed = e.target.checked;
+      item.completed =
+      e.target.checked;
 
       saveData();
 
       renderItems();
 
       if(item.completed){
-        showToast("Item Marked As Taken");
+
+        showToast(
+          "Item Marked As Taken"
+        );
+
       }else{
-        showToast("Item Unchecked");
+
+        showToast(
+          "Item Unchecked"
+        );
       }
 
     });
 
-    /* ===== DELETE ===== */
+    /* DELETE */
 
     div.querySelector(".delete-btn")
     .addEventListener("click",()=>{
 
-      groceries = groceries.filter(
+      groceries =
+      groceries.filter(
         g => g.id !== item.id
       );
 
@@ -767,33 +776,35 @@ function renderItems(){
       renderItems();
 
       showToast("Item Deleted");
+
     });
 
-    /* ===== APPEND ===== */
+    /* APPEND */
 
     if(item.completed){
 
-      completedList.appendChild(div);
+      completedList
+      .appendChild(div);
 
       completed++;
 
     }else{
 
-      pendingList.appendChild(div);
+      pendingList
+      .appendChild(div);
 
       pending++;
     }
 
   });
 
-  /* ===== EMPTY ===== */
+  /* EMPTY STATES */
 
   if(pendingList.innerHTML === ""){
 
     pendingList.innerHTML = `
       <div class="empty">
-        <div class="empty-icon"></div>
-        <p>No pending grocery items</p>
+        No pending grocery items
       </div>
     `;
   }
@@ -802,18 +813,22 @@ function renderItems(){
 
     completedList.innerHTML = `
       <div class="empty">
-        <div class="empty-icon"></div>
-        <p>No taken items yet</p>
+        No taken items yet
       </div>
     `;
   }
 
-  /* ===== COUNTS ===== */
+  totalCount.innerText =
+  groceries.length;
 
-  totalCount.innerText = groceries.length;
-  pendingCount.innerText = pending;
-  completedCount.innerText = completed;
-  pendingBadge.innerText = pending;
+  pendingCount.innerText =
+  pending;
+
+  completedCount.innerText =
+  completed;
+
+  pendingBadge.innerText =
+  pending;
 }
 
 /* ========================= */
@@ -827,9 +842,10 @@ addBtn.addEventListener(
 
 itemInput.addEventListener(
   "keypress",
-  e => {
+  e=>{
 
     if(e.key === "Enter"){
+
       addItem();
     }
   }
@@ -841,63 +857,55 @@ searchInput.addEventListener(
 );
 
 /* ========================= */
-/* ===== SHARE LIST ======== */
+/* ===== SHARE SYSTEM ====== */
 /* ========================= */
 
 document.getElementById("shareBtn")
-.addEventListener("click",async()=>{
+.addEventListener("click",()=>{
 
-  if(groceries.length === 0){
+  const pendingItems =
+  groceries.filter(
+    item => !item.completed
+  );
 
-    showToast("No items to share");
+  if(pendingItems.length === 0){
+
+    showToast(
+      "No Pending Items To Share"
+    );
 
     return;
   }
 
-  const pendingItems = groceries
-  .filter(item => !item.completed)
-  .map((item,index)=>
-    `${index + 1}. ${item.name} (${item.category})`
-  )
-  .join("\n");
+  let shareText =
+  "🛒 Grocery Purchase List\n\n";
 
-  const completedItems = groceries
-  .filter(item => item.completed)
-  .map((item,index)=>
-    `${index + 1}. ${item.name} ✓`
-  )
-  .join("\n");
+  pendingItems.forEach((item,index)=>{
 
-  const text = `🛒 SMART GROCERY LIST
+    shareText +=
+    `${index+1}. ${item.name} (${item.category})\n`;
 
-📌 Pending Items:
-${pendingItems || "No Pending Items"}
-
-✅ Taken Items:
-${completedItems || "No Taken Items"}
-
-Shared Via Smart Grocery List`;
+  });
 
   if(navigator.share){
 
-    try{
+    navigator.share({
 
-      await navigator.share({
-        title:"Smart Grocery List",
-        text:text
-      });
+      title:"Purchase List",
 
-      showToast("List Shared");
+      text:shareText
 
-    }catch(err){
-      console.log(err);
-    }
+    });
 
   }else{
 
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(
+      shareText
+    );
 
-    showToast("List Copied");
+    showToast(
+      "List Copied To Clipboard"
+    );
   }
 
 });
@@ -909,7 +917,8 @@ Shared Via Smart Grocery List`;
 document.getElementById("clearCompleted")
 .addEventListener("click",()=>{
 
-  groceries = groceries.filter(
+  groceries =
+  groceries.filter(
     item => !item.completed
   );
 
@@ -917,27 +926,13 @@ document.getElementById("clearCompleted")
 
   renderItems();
 
-  showToast("Taken Items Cleared");
+  showToast(
+    "Taken Items Cleared"
+  );
 });
 
 /* ========================= */
-/* ===== DARK MODE ========= */
-/* ========================= */
-
-themeBtn.addEventListener("click",()=>{
-
-  document.body.classList.toggle("light");
-
-  if(document.body.classList.contains("light")){
-    themeBtn.innerText = "☀️";
-  }else{
-    themeBtn.innerText = "🌙";
-  }
-
-});
-
-/* ========================= */
-/* ===== FLOAT BTN ========= */
+/* ===== FLOAT BUTTON ====== */
 /* ========================= */
 
 document.getElementById("fab")
@@ -946,14 +941,17 @@ document.getElementById("fab")
   itemInput.focus();
 
   window.scrollTo({
+
     top:0,
+
     behavior:"smooth"
+
   });
 
 });
 
 /* ========================= */
-/* ===== DELETE MODAL ====== */
+/* ===== MODAL ============= */
 /* ========================= */
 
 const modal =
@@ -963,12 +961,14 @@ document.getElementById("deleteAllBtn")
 .addEventListener("click",()=>{
 
   modal.style.display = "flex";
+
 });
 
 document.getElementById("cancelDelete")
 .addEventListener("click",()=>{
 
   modal.style.display = "none";
+
 });
 
 document.getElementById("confirmDelete")
@@ -982,7 +982,10 @@ document.getElementById("confirmDelete")
 
   modal.style.display = "none";
 
-  showToast("All Items Deleted");
+  showToast(
+    "All Items Deleted"
+  );
+
 });
 
 /* ========================= */
