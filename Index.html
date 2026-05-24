@@ -751,7 +751,7 @@ function renderItems(){
 
       <input
         type="checkbox"
-        ${item.completed ? "checked" : ""}
+        ${item.completed ? "checked disabled" : ""}
       >
 
       <div class="item-content">
@@ -770,48 +770,75 @@ function renderItems(){
             ${item.time}
           </span>
 
+          ${
+            item.completed
+            ? `
+            <span class="tag" style="
+              background:rgba(34,197,94,0.2);
+              color:#86efac;
+            ">
+              Purchased
+            </span>
+            `
+            : ""
+          }
+
         </div>
 
       </div>
 
-      <button class="delete-btn">
+      <button
+        class="delete-btn"
+        ${item.completed ? "disabled" : ""}
+        style="
+          ${item.completed
+            ? `
+              opacity:0.4;
+              cursor:not-allowed;
+            `
+            : ""
+          }
+        "
+      >
         ✕
       </button>
     `;
 
-    // Checkbox
+    // Checkbox only for pending items
 
-    div.querySelector("input")
-      .addEventListener("change",e=>{
+    if(!item.completed){
 
-      item.completed = e.target.checked;
+      div.querySelector("input")
+        .addEventListener("change",e=>{
 
-      saveData();
+        item.completed = true;
 
-      renderItems();
+        saveData();
 
-      showToast(
-        item.completed
-        ? "Item Purchased"
-        : "Item Moved Back"
-      );
-    });
+        renderItems();
 
-    // Delete
+        showToast("Item Purchased");
+      });
+    }
 
-    div.querySelector(".delete-btn")
-      .addEventListener("click",()=>{
+    // Delete only for pending items
 
-      groceries = groceries.filter(
-        g => g.id !== item.id
-      );
+    if(!item.completed){
 
-      saveData();
+      div.querySelector(".delete-btn")
+        .addEventListener("click",()=>{
 
-      renderItems();
+        groceries = groceries.filter(
+          g => g.id !== item.id
+        );
 
-      showToast("Item Deleted");
-    });
+        saveData();
+
+        renderItems();
+
+        showToast("Item Deleted");
+      });
+    }
 
     // Append
 
@@ -836,7 +863,7 @@ function renderItems(){
     pendingList.innerHTML = `
       <div class="empty">
         <div class="empty-icon"></div>
-        <p>No grocery items added yet</p>
+        <p>No pending grocery items</p>
       </div>
     `;
   }
