@@ -680,15 +680,29 @@ select option {
    DATA ENCODING / DECODING UTILITIES (URL-Safe Base64 with Unicode Support)
    ========================================================================== */
 
+const CATEGORIES = ['Vegetables', 'Fruits', 'Dairy', 'Snacks', 'Beverages', 'Household', 'Other'];
+
+function getCategoryName(c) {
+  if (typeof c === 'number' && CATEGORIES[c]) return CATEGORIES[c];
+  if (typeof c === 'string' && c) return c;
+  return 'Other';
+}
+
+function getCategoryIndex(catName) {
+  const idx = CATEGORIES.indexOf(catName);
+  return idx >= 0 ? idx : 6;
+}
+
 function encodeListData(items) {
   try {
-    const compact = items.map(item => ({
-      n: item.name,
-      c: item.category || 'Other',
-      k: item.completed ? 1 : 0,
-      q: item.quantity || 1,
-      t: item.time || ''
-    }));
+    const compact = items.map(item => {
+      const obj = { n: item.name };
+      const catIdx = getCategoryIndex(item.category);
+      if (catIdx !== 6) obj.c = catIdx;
+      if (item.completed) obj.k = 1;
+      if (item.quantity && item.quantity > 1) obj.q = item.quantity;
+      return obj;
+    });
     const jsonStr = JSON.stringify(compact);
     // encodeURIComponent handles unicode / emoji before btoa
     const base64 = btoa(encodeURIComponent(jsonStr));
@@ -710,10 +724,10 @@ function decodeListData(encodedStr) {
     return compact.map((item, idx) => ({
       id: Date.now() + idx,
       name: item.n || "Item",
-      category: item.c || "Other",
+      category: getCategoryName(item.c),
       completed: Boolean(item.k),
       quantity: item.q || 1,
-      time: item.t || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }));
   } catch (e) {
     console.error("Decoding failed:", e);
@@ -1089,8 +1103,9 @@ function renderMainAppMode() {
     document.getElementById("pendingScopeCount").innerText = `${pendingOnly.length} items`;
     document.getElementById("allScopeCount").innerText = `${groceries.length} items`;
 
-    generateShareLinkAndUpdateQR();
+    // Ensure modal opens first regardless of QR code rendering
     shareModal.classList.add("active");
+    generateShareLinkAndUpdateQR();
   });
 
   closeShareBtn.addEventListener("click", () => {
@@ -1106,7 +1121,8 @@ function renderMainAppMode() {
   });
 
   function getShareUrl() {
-    const scope = document.querySelector("input[name='shareScope']:checked").value;
+    const scopeRadio = document.querySelector("input[name='shareScope']:checked");
+    const scope = scopeRadio ? scopeRadio.value : "pending";
     const itemsToShare = scope === "pending" ? groceries.filter(g => !g.completed) : groceries;
 
     if (itemsToShare.length === 0) return "";
@@ -1126,34 +1142,66 @@ function renderMainAppMode() {
       return;
     }
 
-    // Generate QR code using CDN or Canvas fallback
+    let qrSuccess = false;
+
     if (window.QRCode) {
-      new QRCode(qrContainer, {
-        text: url,
-        width: 160,
-        height: 160,
-        colorDark: "#0f172a",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    } else {
-      qrContainer.innerHTML = "<p style='color:#64748b; font-size:0.8rem;'>QR Code generator ready.</p>";
+      try {
+        new QRCode(qrContainer, {
+          text: url,
+          width: 160,
+          height: 160,
+          colorDark: "#0f172a",
+          colorLight: "#ffffff",
+          correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.L : 0
+        });
+        qrSuccess = true;
+      } catch (err) {
+        console.warn("QRCodeJS error, using fallback API:", err);
+      }
+    }
+
+    if (!qrSuccess) {
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=4&data=${encodeURIComponent(url)}`;
+      qrContainer.innerHTML = `<img src="${qrApiUrl}" alt="QR Code" style="width:160px; height:160px; display:block; border-radius:8px; margin:0 auto;" onerror="this.onerror=null; this.parentElement.innerHTML='<p style=\\'color:#64748b; font-size:0.75rem; text-align:center;\\'>Use Copy Link or WhatsApp to share</p>';">`;
     }
   }
 
-  // Copy Link
+  // Copy Link with Fallback
   document.getElementById("copyLinkBtn").addEventListener("click", () => {
     const url = getShareUrl();
     if (!url) {
       showToast("No items selected to share", "⚠️");
       return;
     }
-    navigator.clipboard.writeText(url).then(() => {
-      showToast("Shareable link copied to clipboard!", "📋");
-      shareModal.classList.remove("active");
-    }).catch(() => {
-      showToast("Failed to copy link", "❌");
-    });
+
+    function doFallbackCopy(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast("Shareable link copied!", "📋");
+        shareModal.classList.remove("active");
+      } catch (err) {
+        showToast("Failed to copy link", "❌");
+      }
+      document.body.removeChild(textArea);
+    }
+
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast("Shareable link copied to clipboard!", "📋");
+        shareModal.classList.remove("active");
+      }).catch(() => {
+        doFallbackCopy(url);
+      });
+    } else {
+      doFallbackCopy(url);
+    }
   });
 
   // Native / WhatsApp Share
@@ -1170,7 +1218,6 @@ function renderMainAppMode() {
         shareModal.classList.remove("active");
       }).catch(() => {});
     } else {
-      // WhatsApp fallback
       const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent("Grocery Purchase List:\n" + url)}`;
       window.open(waUrl, "_blank");
       shareModal.classList.remove("active");
