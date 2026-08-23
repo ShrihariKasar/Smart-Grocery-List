@@ -1038,17 +1038,25 @@ function getCategoryIndex(catName) {
 
 function encodeListData(items) {
   try {
-    const compact = items.map(item => {
-      const obj = { n: item.name };
+    const compactTokens = items.map(item => {
+      const name = (item.name || "").replace(/~/g, " ").replace(/\|/g, " ");
       const catIdx = getCategoryIndex(item.category);
-      if (catIdx !== 6) obj.c = catIdx;
-      if (item.completed) obj.k = 1;
-      if (item.quantity && item.quantity > 1) obj.q = item.quantity;
-      return obj;
+      const qty = item.quantity || 1;
+      const comp = item.completed ? 1 : 0;
+
+      if (comp === 0 && qty === 1 && catIdx === 6) {
+        return name;
+      } else if (comp === 0 && qty === 1) {
+        return `${name}|${catIdx}`;
+      } else if (comp === 0) {
+        return `${name}|${catIdx}|${qty}`;
+      } else {
+        return `${name}|${catIdx}|${qty}|${comp}`;
+      }
     });
-    const jsonStr = JSON.stringify(compact);
-    // LZString compressed URI string (85-90% smaller than raw Base64)
-    return LZString.compressToEncodedURIComponent(jsonStr);
+
+    const raw = compactTokens.join("~");
+    return LZString.compressToEncodedURIComponent(raw);
   } catch (e) {
     console.error("Encoding failed:", e);
     return "";
@@ -1058,33 +1066,57 @@ function encodeListData(items) {
 function decodeListData(encodedStr) {
   if (!encodedStr) return null;
   try {
-    let jsonStr = null;
+    let decompressed = null;
 
     // Try LZString decompression
     try {
-      jsonStr = LZString.decompressFromEncodedURIComponent(encodedStr);
+      decompressed = LZString.decompressFromEncodedURIComponent(encodedStr);
     } catch (err) {}
 
     // Fallback to legacy Base64 decoding if LZString returns empty or invalid
-    if (!jsonStr || !jsonStr.trim().startsWith("[")) {
+    if (!decompressed) {
       try {
         const base64 = decodeURIComponent(encodedStr);
-        jsonStr = decodeURIComponent(atob(base64));
+        decompressed = decodeURIComponent(atob(base64));
       } catch (err) {}
     }
 
-    if (!jsonStr) return null;
-    const compact = JSON.parse(jsonStr);
-    if (!Array.isArray(compact)) return null;
+    if (!decompressed) return null;
 
-    return compact.map((item, idx) => ({
-      id: Date.now() + idx,
-      name: item.n || "Item",
-      category: getCategoryName(item.c),
-      completed: Boolean(item.k),
-      quantity: item.q || 1,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }));
+    // Legacy JSON array support
+    if (decompressed.trim().startsWith("[")) {
+      const compact = JSON.parse(decompressed);
+      if (!Array.isArray(compact)) return null;
+      return compact.map((item, idx) => ({
+        id: Date.now() + idx,
+        name: item.n || "Item",
+        category: getCategoryName(item.c),
+        completed: Boolean(item.k),
+        quantity: item.q || 1,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }));
+    }
+
+    // Compact ~ delimited format
+    const itemTokens = decompressed.split("~");
+    if (itemTokens.length === 0) return null;
+
+    return itemTokens.map((tok, idx) => {
+      const parts = tok.split("|");
+      const name = parts[0] || "Item";
+      const catIdx = parts[1] !== undefined ? parseInt(parts[1]) : 6;
+      const qty = parts[2] !== undefined ? parseInt(parts[2]) : 1;
+      const comp = parts[3] !== undefined ? parts[3] === "1" : false;
+
+      return {
+        id: Date.now() + idx,
+        name: name,
+        category: getCategoryName(isNaN(catIdx) ? parts[1] : catIdx),
+        completed: comp,
+        quantity: isNaN(qty) ? 1 : qty,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+    });
   } catch (e) {
     console.error("Decoding failed:", e);
     return null;
