@@ -1024,6 +1024,52 @@ const LZString = (function() {
    ========================================================================== */
 
 const CATEGORIES = ['Vegetables', 'Fruits', 'Dairy', 'Snacks', 'Beverages', 'Household', 'Other'];
+const SECRET_CIPHER_KEY = "SmartGrocery$2026$SecureCipherKey!";
+
+function encryptPayload(text, key = SECRET_CIPHER_KEY) {
+  if (!text) return "";
+  try {
+    const compressed = LZString.compressToEncodedURIComponent(text);
+    let result = [];
+    for (let i = 0; i < compressed.length; i++) {
+      const charCode = compressed.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+      result.push(String.fromCharCode(charCode));
+    }
+    const ciphered = result.join('');
+    return "e1_" + LZString.compressToEncodedURIComponent(ciphered);
+  } catch (err) {
+    console.error("Encryption failed:", err);
+    return LZString.compressToEncodedURIComponent(text);
+  }
+}
+
+function decryptPayload(encodedStr, key = SECRET_CIPHER_KEY) {
+  if (!encodedStr) return null;
+  try {
+    let target = encodedStr;
+    if (encodedStr.startsWith("e1_")) {
+      const payloadBody = encodedStr.slice(3);
+      const decipheredCompressed = LZString.decompressFromEncodedURIComponent(payloadBody);
+      if (!decipheredCompressed) return null;
+      
+      let result = [];
+      for (let i = 0; i < decipheredCompressed.length; i++) {
+        const charCode = decipheredCompressed.charCodeAt(i) ^ key.charCodeAt(i % key.length);
+        result.push(String.fromCharCode(charCode));
+      }
+      target = result.join('');
+    }
+
+    let decompressed = LZString.decompressFromEncodedURIComponent(target);
+    if (!decompressed) {
+      decompressed = target;
+    }
+    return decompressed;
+  } catch (err) {
+    console.error("Decryption failed:", err);
+    return null;
+  }
+}
 
 function getCategoryName(c) {
   if (typeof c === 'number' && CATEGORIES[c]) return CATEGORIES[c];
@@ -1056,7 +1102,7 @@ function encodeListData(items) {
     });
 
     const raw = compactTokens.join("~");
-    return LZString.compressToEncodedURIComponent(raw);
+    return encryptPayload(raw);
   } catch (e) {
     console.error("Encoding failed:", e);
     return "";
@@ -1066,12 +1112,7 @@ function encodeListData(items) {
 function decodeListData(encodedStr) {
   if (!encodedStr) return null;
   try {
-    let decompressed = null;
-
-    // Try LZString decompression
-    try {
-      decompressed = LZString.decompressFromEncodedURIComponent(encodedStr);
-    } catch (err) {}
+    let decompressed = decryptPayload(encodedStr);
 
     // Fallback to legacy Base64 decoding if LZString returns empty or invalid
     if (!decompressed) {
@@ -1124,6 +1165,85 @@ function decodeListData(encodedStr) {
 }
 
 /* ==========================================================================
+   SESSION & STORAGE MANAGEMENT
+   ========================================================================== */
+
+function hashString(str) {
+  let hash = 0;
+  if (!str) return "default";
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+function getDeviceSessionKey() {
+  return "grocery_device_session";
+}
+
+function loadMainSessionData() {
+  const primary = localStorage.getItem(getDeviceSessionKey());
+  if (primary) {
+    try { return JSON.parse(primary); } catch(e) {}
+  }
+  // Fallback to legacy key if present
+  const legacy = localStorage.getItem("groceries");
+  if (legacy) {
+    try {
+      const parsed = JSON.parse(legacy);
+      localStorage.setItem(getDeviceSessionKey(), legacy);
+      return parsed;
+    } catch(e) {}
+  }
+  return [];
+}
+
+function saveMainSessionData(items) {
+  const jsonStr = JSON.stringify(items);
+  localStorage.setItem(getDeviceSessionKey(), jsonStr);
+  localStorage.setItem("groceries", jsonStr);
+}
+
+function getLinkSessionKey(payload) {
+  return "grocery_link_session_" + hashString(payload);
+}
+
+function loadLinkSessionData(payload) {
+  if (!payload) return null;
+  const linkKey = getLinkSessionKey(payload);
+  const existing = localStorage.getItem(linkKey);
+  if (existing) {
+    try {
+      return JSON.parse(existing);
+    } catch (e) {
+      console.warn("Failed to parse stored link session:", e);
+    }
+  }
+
+  // Initial load: decode payload and persist as new link session
+  const decoded = decodeListData(payload);
+  if (decoded !== null) {
+    localStorage.setItem(linkKey, JSON.stringify(decoded));
+    return decoded;
+  }
+  return null;
+}
+
+function saveLinkSessionData(payload, items) {
+  if (!payload) return;
+  const linkKey = getLinkSessionKey(payload);
+  localStorage.setItem(linkKey, JSON.stringify(items));
+}
+
+function resetLinkSessionData(payload) {
+  if (!payload) return null;
+  const linkKey = getLinkSessionKey(payload);
+  localStorage.removeItem(linkKey);
+  return loadLinkSessionData(payload);
+}
+
+/* ==========================================================================
    APPLICATION STATE & ROUTING
    ========================================================================== */
 
@@ -1143,43 +1263,53 @@ function showToast(message, icon = "✨") {
   setTimeout(() => toast.classList.remove("show"), 2600);
 }
 
-/* Check if opening shared mode vs main mode */
-const sharedItems = decodeListData(sharePayload);
-
-if (sharedItems !== null) {
-  renderSharedMode(sharedItems);
+/* Check if opening shared link mode vs main app mode */
+if (sharePayload) {
+  const sharedItems = loadLinkSessionData(sharePayload);
+  if (sharedItems !== null) {
+    renderSharedMode(sharePayload, sharedItems);
+  } else {
+    renderMainAppMode();
+  }
 } else {
   renderMainAppMode();
 }
 
 /* ==========================================================================
-   SHARED LIST MODE (RECIPIENT DEVICE VIEW)
+   SHARED LIST MODE (RECIPIENT DEVICE VIEW - PERSISTENT LINK SESSION)
    ========================================================================== */
 
-function renderSharedMode(items) {
+function renderSharedMode(payload, items) {
   const container = document.getElementById("appContainer");
+  const sessionHash = hashString(payload).toUpperCase();
   
   container.innerHTML = `
     <div class="shared-view-banner">
       <div>
-        <h3 style="font-size: 1.1rem; color: #fff;">📦 Shared Purchase List</h3>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+          <h3 style="font-size: 1.1rem; color: #fff;">📦 Shared Link Session</h3>
+          <span class="badge" style="background:rgba(6, 182, 212, 0.25); color:#67e8f9;">#${sessionHash}</span>
+        </div>
         <p style="font-size: 0.85rem; color: var(--text-muted);">
-          You received a grocery list! Tick items off as you buy them on your phone.
+          Dedicated session for this link. Your progress is saved automatically for this link on your device.
         </p>
       </div>
-      <div style="display: flex; gap: 10px;">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
         <button class="btn btn-success btn-sm" id="importBtn">
           📥 Import to My List
         </button>
+        <button class="btn btn-secondary btn-sm" id="resetLinkBtn" title="Reset this link session to initial shared state">
+          🔄 Reset Link
+        </button>
         <button class="btn btn-secondary btn-sm" id="openMainBtn">
-          🏠 My App
+          🏠 My Device App
         </button>
       </div>
     </div>
 
     <div class="progress-container">
       <div class="progress-header">
-        <span>Shopping Progress</span>
+        <span>Shopping Progress (Link #${sessionHash})</span>
         <span id="sharedProgressText">0 of 0 taken</span>
       </div>
       <div class="progress-bar-bg">
@@ -1226,7 +1356,9 @@ function renderSharedMode(items) {
 
       card.querySelector("input").addEventListener("change", (e) => {
         item.completed = e.target.checked;
+        saveLinkSessionData(payload, items);
         updateSharedUI();
+        showToast("Progress saved to link session", "💾");
       });
 
       itemListEl.appendChild(card);
@@ -1235,13 +1367,23 @@ function renderSharedMode(items) {
     const percent = items.length === 0 ? 0 : Math.round((takenCount / items.length) * 100);
     document.getElementById("sharedProgressBar").style.width = `${percent}%`;
     document.getElementById("sharedProgressText").innerText = `${takenCount} of ${items.length} taken (${percent}%)`;
+    document.getElementById("sharedItemBadge").innerText = `${items.length} Items`;
   }
 
   updateSharedUI();
 
+  // Reset link session functionality
+  document.getElementById("resetLinkBtn").addEventListener("click", () => {
+    if (confirm("Reset progress for this link back to original shared state?")) {
+      items = resetLinkSessionData(payload) || [];
+      updateSharedUI();
+      showToast("Link session reset to initial state", "🔄");
+    }
+  });
+
   // Import functionality
   document.getElementById("importBtn").addEventListener("click", () => {
-    let existing = JSON.parse(localStorage.getItem("groceries") || "[]");
+    let existing = loadMainSessionData();
     
     // Append items
     const newItems = items.map(i => ({
@@ -1254,9 +1396,9 @@ function renderSharedMode(items) {
     }));
 
     const merged = [...newItems, ...existing];
-    localStorage.setItem("groceries", JSON.stringify(merged));
+    saveMainSessionData(merged);
     
-    showToast("Imported items into your local app!", "🎉");
+    showToast("Imported items into your local device list!", "🎉");
     setTimeout(() => {
       window.location.href = window.location.pathname;
     }, 1500);
@@ -1268,7 +1410,7 @@ function renderSharedMode(items) {
 }
 
 /* ==========================================================================
-   MAIN APPLICATION MODE
+   MAIN APPLICATION MODE (ISOLATED DEVICE SESSION)
    ========================================================================== */
 
 function renderMainAppMode() {
@@ -1276,6 +1418,12 @@ function renderMainAppMode() {
 
   container.innerHTML = `
     <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <span class="badge" style="background: rgba(139, 92, 246, 0.2); color: #c7d2fe; padding: 6px 12px; font-size: 0.8rem;">
+          📱 Device Main Session (Isolated)
+        </span>
+      </div>
+
       <div class="form-grid">
         <input type="text" id="itemInput" placeholder="Add grocery item (e.g. Fresh Milk)" autofocus>
         <select id="categorySelect">
@@ -1348,10 +1496,10 @@ function renderMainAppMode() {
   `;
 
   // Local storage management
-  let groceries = JSON.parse(localStorage.getItem("groceries") || "[]");
+  let groceries = loadMainSessionData();
 
   function save() {
-    localStorage.setItem("groceries", JSON.stringify(groceries));
+    saveMainSessionData(groceries);
   }
 
   function addItem() {
